@@ -40,5 +40,9 @@ private:
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
 
+	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
+
+	float meshTint[4];
+	float meshOffset[3];
 };
 
