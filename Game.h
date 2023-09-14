@@ -42,7 +42,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
 
-	float meshTint[4];
-	float meshOffset[3];
+	float meshTint[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	float meshOffset[3] = { 0.0f, 0.0f, 0.0f };
 };
 

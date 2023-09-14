@@ -15,6 +15,9 @@
 // For the DirectX Math library
 using namespace DirectX;
 
+//float meshTint[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+//float meshOffset[3] = { 0.0f, 0.0f, 0.0f };
+
 // --------------------------------------------------------
 // Constructor
 //
