@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include "Mesh.h"
+#include "Entity.h"
 
 class Game 
 	: public DXCore
@@ -38,11 +39,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
-	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<std::shared_ptr<Entity>> entities;
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
 
-	float meshTint[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	float meshOffset[3] = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 };
 

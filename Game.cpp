@@ -15,9 +15,6 @@
 // For the DirectX Math library
 using namespace DirectX;
 
-//float meshTint[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-//float meshOffset[3] = { 0.0f, 0.0f, 0.0f };
-
 // --------------------------------------------------------
 // Constructor
 //
@@ -232,7 +229,7 @@ void Game::CreateGeometry()
 	// - But just to see how it's done...
 	unsigned int triangleIndices[] = { 0, 1, 2 };
 
-	meshes.push_back(std::make_shared<Mesh>(triangleVertices, 3, triangleIndices, 3, device, context));
+	std::shared_ptr<Mesh> triangle = std::make_shared<Mesh>(triangleVertices, 3, triangleIndices, 3, device, context);
 
 	Vertex rectVertices[] =
 	{
@@ -244,7 +241,7 @@ void Game::CreateGeometry()
 
 	unsigned int rectIndices[] = { 0, 1, 2, 2, 1, 3 };
 
-	meshes.push_back(std::make_shared<Mesh>(rectVertices, 4, rectIndices, 6, device, context));
+	std::shared_ptr<Mesh> rectangle = std::make_shared<Mesh>(rectVertices, 4, rectIndices, 6, device, context);
 
 	Vertex funVertices[] =
 	{
@@ -259,8 +256,13 @@ void Game::CreateGeometry()
 
 	unsigned int funIndices[] = { 0, 1, 2, 2, 1, 3, 1, 4, 5, 5, 3, 1};
 
-	meshes.push_back(std::make_shared<Mesh>(funVertices, 6, funIndices, 12, device, context));
+	std::shared_ptr<Mesh> fun = std::make_shared<Mesh>(funVertices, 6, funIndices, 12, device, context);
 
+	entities.push_back(std::make_shared<Entity>(Entity(triangle)));
+	entities.push_back(std::make_shared<Entity>(Entity(rectangle)));
+	entities.push_back(std::make_shared<Entity>(Entity(fun)));
+	entities.push_back(std::make_shared<Entity>(Entity(fun)));
+	entities.push_back(std::make_shared<Entity>(Entity(rectangle)));
 }
 
 
@@ -294,9 +296,47 @@ void Game::Update(float deltaTime, float totalTime)
 	ImGui::Text("FPS: %f", ImGui::GetIO().Framerate);
 	ImGui::Text("Width: %i", windowWidth);
 	ImGui::Text("Height: %i", windowHeight);
-	ImGui::DragFloat3("Offset", meshOffset, 0.01f);
-	ImGui::ColorEdit4("Tint", meshTint);
+	//ImGui::DragFloat3("Offset", &meshOffset._41, 0.01f);
+	ImGui::ColorEdit4("Tint", &meshTint.x);
+
+
+	for (int i=0; i<entities.size(); i++) 
+	{
+		entities[i]->SetTint(meshTint);
+		ImGui::PushID(i);
+
+		ImGui::Text("Entity %i", i);
+
+		XMFLOAT3 pos = entities[i]->GetTransform().GetPosition();
+		if (ImGui::DragFloat3("Position", &pos.x, 0.01f))
+		{
+			entities[i]->GetTransform().SetPosition(pos);
+		}
+
+		XMFLOAT3 rot = entities[i]->GetTransform().GetPitchYawRoll();
+		if (ImGui::DragFloat3("Rotation (Radians)", &rot.x, 0.01f))
+		{
+			entities[i]->GetTransform().SetRotation(rot);
+		}
+
+		XMFLOAT3 scale = entities[i]->GetTransform().GetScale();
+		if (ImGui::DragFloat3("Scale", &scale.x, 0.01f))
+		{
+			entities[i]->GetTransform().SetScale(scale);
+		}
+
+		ImGui::PopID();
+	}
+
 	ImGui::End(); // Ends the current window
+
+	//Apply Transformations to Entities
+	entities[3]->GetTransform().Rotate(0, 0, sinf(deltaTime));
+	entities[3]->GetTransform().Scale(0.99999f, 0.99999f, 1.0f);
+	entities[0]->GetTransform().MoveAbsolute(XMFLOAT3(0,sinf(deltaTime), 0));
+	entities[4]->GetTransform().SetPosition(XMFLOAT3(0, sinf(totalTime), 0));
+	entities[1]->GetTransform().SetScale(sinf(totalTime), sinf(totalTime), 1);
+	entities[2]->GetTransform().SetPosition((XMFLOAT3(sinf(totalTime)-0.5f, sinf(totalTime), 0)));
 
 	// Determine new input capture
 	Input& input = Input::GetInstance();
@@ -327,26 +367,12 @@ void Game::Draw(float deltaTime, float totalTime)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	VertexShaderExternalData vsData;
-	vsData.colorTint = XMFLOAT4(meshTint[0], meshTint[1], meshTint[2], meshTint[3]);
-	vsData.offset = XMFLOAT3(meshOffset[0], meshOffset[1], meshOffset[2]);
-
-	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-	context->Map(vsConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-	memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
-	context->Unmap(vsConstantBuffer.Get(), 0);
-
-	context->VSSetConstantBuffers(
-		0,
-		1,
-		vsConstantBuffer.GetAddressOf());
-
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw
 	// - Other Direct3D calls will also be necessary to do more complex things
 	
-	for(std::shared_ptr<Mesh> mesh : meshes) {
-		mesh->Draw();
+	for(std::shared_ptr<Entity> e : entities) {
+		e->Draw(context, vsConstantBuffer);
 	}
 	
 
