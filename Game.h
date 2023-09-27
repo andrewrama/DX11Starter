@@ -7,6 +7,7 @@
 #include <vector>
 #include "Mesh.h"
 #include "Entity.h"
+#include "Camera.h"
 
 class Game 
 	: public DXCore
@@ -44,5 +45,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
 
 	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	std::shared_ptr<Camera> camera;
 };
 

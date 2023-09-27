@@ -104,6 +104,8 @@ void Game::Init()
 	//ImGui::StyleColorsLight();
 	//ImGui::StyleColorsClassic();
 
+	camera = std::make_shared<Camera>(Camera(0.0f, 0.0f, -5.0f, 4.0f, 0.005f, XM_PIDIV4, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f));
+
 	// Get size as the next multiple of 16
 	unsigned int size = sizeof(VertexShaderExternalData);
 	size = (size + 15) / 16 * 16; // This will work even if the struct size changes
@@ -275,6 +277,9 @@ void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
+	// Update the camera's projection matrix
+	if(camera)
+		camera->UpdateProjectionMatrix((float)this->windowWidth / this->windowHeight);
 }
 
 // --------------------------------------------------------
@@ -342,8 +347,9 @@ void Game::Update(float deltaTime, float totalTime)
 	Input& input = Input::GetInstance();
 	input.SetKeyboardCapture(io.WantCaptureKeyboard);
 	input.SetMouseCapture(io.WantCaptureMouse);
-	// Show the demo window
-	ImGui::ShowDemoWindow();
+
+
+	camera->Update(deltaTime);
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE))
@@ -372,7 +378,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - Other Direct3D calls will also be necessary to do more complex things
 	
 	for(std::shared_ptr<Entity> e : entities) {
-		e->Draw(context, vsConstantBuffer);
+		e->Draw(context, vsConstantBuffer, camera);
 	}
 	
 

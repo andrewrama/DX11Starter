@@ -12,10 +12,12 @@ public:
 		float _moveSpeed,
 		float _mouseLookSpeed,
 		float _fov,
-		float _aspectRatio);
+		float _aspectRatio,
+		float _nearClipPlane,
+		float _farClipPlane);
 	~Camera();
 
-	Transform& GetTransform();
+	Transform* GetTransform();
 	DirectX::XMFLOAT4X4 GetViewMatrix();
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
 	float GetAspectRatio();
