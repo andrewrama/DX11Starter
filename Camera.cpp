@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Input.h"
 
 using namespace DirectX;
 
@@ -145,8 +146,8 @@ void Camera::Update(float dt)
     // Camera rotation
     if (input.MouseLeftDown())
     {
-        float cursorMovementX = (float)input.GetMouseXDelta() * mouseLookSpeed;
-        float cursorMovementY = (float)input.GetMouseYDelta() * mouseLookSpeed;
+        float cursorMovementX = input.GetMouseXDelta() * mouseLookSpeed;
+        float cursorMovementY = input.GetMouseYDelta() * mouseLookSpeed;
         transform.Rotate(cursorMovementY, cursorMovementX, 0);
 
         // Clamp x so that camera doesn't flip upside down

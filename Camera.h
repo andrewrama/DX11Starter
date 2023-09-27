@@ -2,7 +2,6 @@
 #include "DXCore.h"
 #include <DirectXMath.h>
 #include "Transform.h"
-#include "Input.h"
 
 class Camera
 {

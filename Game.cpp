@@ -104,7 +104,13 @@ void Game::Init()
 	//ImGui::StyleColorsLight();
 	//ImGui::StyleColorsClassic();
 
-	camera = std::make_shared<Camera>(Camera(0.0f, 0.0f, -5.0f, 4.0f, 0.006f, XM_PIDIV4, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f));
+	// Create 3 different cameras
+	cameraList.push_back(std::make_shared<Camera>(Camera(0.0f, 0.0f, -5.0f, 4.0f, 0.006f, XM_PIDIV4, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f)));
+	cameraList.push_back(std::make_shared<Camera>(Camera(0.0f, 5.0f, -10.0f, 4.0f, 0.006f, XM_PIDIV2, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f)));
+	cameraList.push_back(std::make_shared<Camera>(Camera(2.0f, 2.0f, -6.0f, 4.0f, 0.006f, XM_PI/3, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f)));
+
+	// Set active camera as first camera in the list
+	activeCamera = cameraList[0];
 
 	// Get size as the next multiple of 16
 	unsigned int size = sizeof(VertexShaderExternalData);
@@ -277,9 +283,10 @@ void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
-	// Update the camera's projection matrix
-	if(camera)
+	// Update all camera projection matrices
+	for (auto& camera : cameraList) {
 		camera->UpdateProjectionMatrix((float)this->windowWidth / this->windowHeight);
+	}
 }
 
 // --------------------------------------------------------
@@ -304,33 +311,52 @@ void Game::Update(float deltaTime, float totalTime)
 	//ImGui::DragFloat3("Offset", &meshOffset._41, 0.01f);
 	ImGui::ColorEdit4("Tint", &meshTint.x);
 
-
-	for (int i=0; i<entities.size(); i++) 
+	// Entity UI
+	if (ImGui::TreeNode("Entities"))
 	{
-		entities[i]->SetTint(meshTint);
-		ImGui::PushID(i);
-
-		ImGui::Text("Entity %i", i);
-
-		XMFLOAT3 pos = entities[i]->GetTransform().GetPosition();
-		if (ImGui::DragFloat3("Position", &pos.x, 0.01f))
+		for (int i = 0; i < entities.size(); i++)
 		{
-			entities[i]->GetTransform().SetPosition(pos);
-		}
+			entities[i]->SetTint(meshTint);
+			ImGui::PushID(i);
 
-		XMFLOAT3 rot = entities[i]->GetTransform().GetPitchYawRoll();
-		if (ImGui::DragFloat3("Rotation (Radians)", &rot.x, 0.01f))
-		{
-			entities[i]->GetTransform().SetRotation(rot);
-		}
+			ImGui::Text("Entity %i", i);
 
-		XMFLOAT3 scale = entities[i]->GetTransform().GetScale();
-		if (ImGui::DragFloat3("Scale", &scale.x, 0.01f))
-		{
-			entities[i]->GetTransform().SetScale(scale);
-		}
+			XMFLOAT3 pos = entities[i]->GetTransform().GetPosition();
+			if (ImGui::DragFloat3("Position", &pos.x, 0.01f))
+			{
+				entities[i]->GetTransform().SetPosition(pos);
+			}
 
-		ImGui::PopID();
+			XMFLOAT3 rot = entities[i]->GetTransform().GetPitchYawRoll();
+			if (ImGui::DragFloat3("Rotation (Radians)", &rot.x, 0.01f))
+			{
+				entities[i]->GetTransform().SetRotation(rot);
+			}
+
+			XMFLOAT3 scale = entities[i]->GetTransform().GetScale();
+			if (ImGui::DragFloat3("Scale", &scale.x, 0.01f))
+			{
+				entities[i]->GetTransform().SetScale(scale);
+			}
+
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+
+	// Camera UI
+	if (ImGui::TreeNode("Cameras"))
+	{
+		if (ImGui::RadioButton("Camera #1", activeCamera == cameraList[0])) activeCamera = cameraList[0];
+		if (ImGui::RadioButton("Camera #2", activeCamera == cameraList[1])) activeCamera = cameraList[1];
+		if (ImGui::RadioButton("Camera #3", activeCamera == cameraList[2])) activeCamera = cameraList[2];
+
+		ImGui::Text("Position: %f, %f, %f", activeCamera->GetTransform()->GetPosition().x, 
+			activeCamera->GetTransform()->GetPosition().y,
+			activeCamera->GetTransform()->GetPosition().z);
+		ImGui::Text("Field of View: %f", XMConvertToDegrees(activeCamera->GetFieldOfView()));
+		ImGui::Text("Near/Far Clip Plane: %f/%f", activeCamera->GetNearClipPlane(), activeCamera->GetFarClipPlane());
+		ImGui::TreePop();
 	}
 
 	ImGui::End(); // Ends the current window
@@ -348,8 +374,8 @@ void Game::Update(float deltaTime, float totalTime)
 	input.SetKeyboardCapture(io.WantCaptureKeyboard);
 	input.SetMouseCapture(io.WantCaptureMouse);
 
-
-	camera->Update(deltaTime);
+	// Update the active camera
+	activeCamera->Update(deltaTime);
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE))
@@ -378,7 +404,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - Other Direct3D calls will also be necessary to do more complex things
 	
 	for(std::shared_ptr<Entity> e : entities) {
-		e->Draw(context, vsConstantBuffer, camera);
+		e->Draw(context, vsConstantBuffer, activeCamera);
 	}
 	
 

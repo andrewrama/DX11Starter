@@ -17,6 +17,6 @@ public:
 private:
 	Transform transform;
 	std::shared_ptr<Mesh> mesh;
-	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 };
 

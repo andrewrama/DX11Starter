@@ -44,8 +44,9 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
 
-	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	std::shared_ptr<Camera> camera;
+	std::shared_ptr<Camera> activeCamera;
+	std::vector<std::shared_ptr<Camera>> cameraList;
 };
 
