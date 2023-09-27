@@ -145,9 +145,9 @@ void Camera::Update(float dt)
     // Camera rotation
     if (input.MouseLeftDown())
     {
-        float cursorMovementX = (float)input.GetMouseXDelta();
-        float cursorMovementY = (float)input.GetMouseYDelta();
-        transform.Rotate(cursorMovementX, cursorMovementY, 0);
+        float cursorMovementX = (float)input.GetMouseXDelta() * mouseLookSpeed;
+        float cursorMovementY = (float)input.GetMouseYDelta() * mouseLookSpeed;
+        transform.Rotate(cursorMovementY, cursorMovementX, 0);
 
         // Clamp x so that camera doesn't flip upside down
         XMFLOAT3 rotation = transform.GetPitchYawRoll();

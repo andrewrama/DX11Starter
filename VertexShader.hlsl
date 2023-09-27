@@ -2,8 +2,8 @@ cbuffer ExternalData : register(b0)
 {
     float4 colorTint;
     matrix world;
-    matrix projection;
     matrix view;
+    matrix projection;  
 }
 
 

@@ -104,7 +104,7 @@ void Game::Init()
 	//ImGui::StyleColorsLight();
 	//ImGui::StyleColorsClassic();
 
-	camera = std::make_shared<Camera>(Camera(0.0f, 0.0f, -5.0f, 4.0f, 0.005f, XM_PIDIV4, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f));
+	camera = std::make_shared<Camera>(Camera(0.0f, 0.0f, -5.0f, 4.0f, 0.006f, XM_PIDIV4, (float)this->windowWidth / this->windowHeight, 0.0001f, 100.0f));
 
 	// Get size as the next multiple of 16
 	unsigned int size = sizeof(VertexShaderExternalData);
