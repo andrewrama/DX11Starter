@@ -153,9 +153,9 @@ void Camera::Update(float dt)
         // Clamp x so that camera doesn't flip upside down
         XMFLOAT3 rotation = transform.GetPitchYawRoll();
         if (rotation.x > XM_PIDIV2)
-            rotation.x = XM_PIDIV2;
+            rotation.x = XM_PIDIV2-0.005f;
         if (rotation.x < -XM_PIDIV2)
-            rotation.x = -XM_PIDIV2;
+            rotation.x = -XM_PIDIV2+0.005f;
         transform.SetRotation(rotation);
     }
 
