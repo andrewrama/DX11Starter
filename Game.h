@@ -39,14 +39,13 @@ private:
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimplePixelShader> customPS;
 
 	std::vector<std::shared_ptr<Entity>> entities;
 
 	std::shared_ptr<Camera> activeCamera;
 	std::vector<std::shared_ptr<Camera>> cameraList;
 
-	std::shared_ptr<Material> m1;
-	std::shared_ptr<Material> m2;
-	std::shared_ptr<Material> m3;
+	std::vector<std::shared_ptr<Material>> materials;
 };
 

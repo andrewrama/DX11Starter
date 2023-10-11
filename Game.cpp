@@ -72,9 +72,10 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 	// Create 3 different materials
-	m1 = std::make_shared<Material>(Material(XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f), vertexShader, pixelShader));
-	m2 = std::make_shared<Material>(Material(XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), vertexShader, pixelShader));
-	m3 = std::make_shared<Material>(Material(XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), vertexShader, pixelShader));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f), vertexShader, pixelShader)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), vertexShader, pixelShader)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), vertexShader, pixelShader)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), vertexShader, customPS)));
 	CreateGeometry();
 	
 	// Set initial graphics API state
@@ -122,6 +123,9 @@ void Game::LoadShaders()
 
 	pixelShader = std::make_shared<SimplePixelShader>(device, context,
 		FixPath(L"PixelShader.cso").c_str());
+
+	customPS = std::make_shared<SimplePixelShader>(device, context,
+		FixPath(L"CustomPS.cso").c_str());
 }
 
 
@@ -202,14 +206,14 @@ void Game::CreateGeometry()
 	//entities.push_back(std::make_shared<Entity>(Entity(rectangle,m2)));
 #pragma endregion
 
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), m1)));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[3])));
 	entities[0]->GetTransform().SetPosition(XMFLOAT3(-3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), m2)));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), m3)));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[3])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[3])));
 	entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), m1)));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[3])));
 	entities[3]->GetTransform().SetPosition(XMFLOAT3(-6.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), m2)));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[3])));
 	entities[4]->GetTransform().SetPosition(XMFLOAT3(6.0f, 0.0f, 0.0f));
 }
 
@@ -343,7 +347,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - Other Direct3D calls will also be necessary to do more complex things
 	
 	for(std::shared_ptr<Entity> e : entities) {
-		e->Draw(context, activeCamera);
+		e->Draw(context, activeCamera, totalTime);
 	}
 	
 

@@ -24,7 +24,7 @@ std::shared_ptr<Material> Entity::GetMaterial()
 
 
 void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
-	std::shared_ptr<Camera> camera)
+	std::shared_ptr<Camera> camera, float totalTime)
 {
 
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
@@ -35,6 +35,7 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 
 	std::shared_ptr<SimplePixelShader> ps = material->GetPixelShader();
 	ps->SetFloat4("colorTint", material->GetColorTint());
+	ps->SetFloat("totalTime", totalTime);
 	ps->CopyAllBufferData();
 
 	material->GetVertexShader()->SetShader();
