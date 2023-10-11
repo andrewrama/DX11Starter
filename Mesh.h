@@ -10,21 +10,26 @@ class Mesh
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceCtx;
 		int numOfIndices;
+
+		void CreateBuffers(Vertex* _vertices,
+			int numOfVertices,
+			unsigned int* _indices,
+			int _numOfIndices,
+			Microsoft::WRL::ComPtr<ID3D11Device> _device);
 
 	public:
 		Mesh(Vertex* _vertices,
 			int numOfVertices,
 			unsigned int* _indices,
 			int _numOfIndices,
-			Microsoft::WRL::ComPtr<ID3D11Device> _device,
-			Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx);
+			Microsoft::WRL::ComPtr<ID3D11Device> _device);
+		Mesh(const std::wstring& objFile, Microsoft::WRL::ComPtr<ID3D11Device> device);
 		~Mesh();
 
 		Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();
 		Microsoft::WRL::ComPtr<ID3D11Buffer> GetIndexBuffer();
 		int GetIndexCount();
-		void Draw();
+		void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 };
 

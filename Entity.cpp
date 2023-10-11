@@ -28,17 +28,19 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 {
 
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
-	vs->SetFloat4("colorTint", material->GetColorTint());
 	vs->SetMatrix4x4("world", transform.GetWorldMatrix());
 	vs->SetMatrix4x4("view", camera->GetViewMatrix());
 	vs->SetMatrix4x4("projection", camera->GetProjectionMatrix());
-
 	vs->CopyAllBufferData();
+
+	std::shared_ptr<SimplePixelShader> ps = material->GetPixelShader();
+	ps->SetFloat4("colorTint", material->GetColorTint());
+	ps->CopyAllBufferData();
 
 	material->GetVertexShader()->SetShader();
 	material->GetPixelShader()->SetShader();
 
-	mesh->Draw();
+	mesh->Draw(context);
 }
 
 void Entity::SetMesh(std::shared_ptr<Mesh> _mesh)
