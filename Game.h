@@ -8,6 +8,7 @@
 #include "Mesh.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "SimpleShader.h"
 
 class Game 
 	: public DXCore
@@ -36,17 +37,16 @@ private:
 	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
 	
 	// Shaders and shader-related constructs
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimpleVertexShader> vertexShader;
 
 	std::vector<std::shared_ptr<Entity>> entities;
 
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
-
-	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
 	std::shared_ptr<Camera> activeCamera;
 	std::vector<std::shared_ptr<Camera>> cameraList;
+
+	std::shared_ptr<Material> m1;
+	std::shared_ptr<Material> m2;
+	std::shared_ptr<Material> m3;
 };
 

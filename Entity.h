@@ -3,20 +3,25 @@
 #include "Transform.h"
 #include "Mesh.h"
 #include "Camera.h"
+#include "Material.h"
+
 class Entity
 {
 public:
-	Entity(std::shared_ptr<Mesh> _mesh);
+	Entity(std::shared_ptr<Mesh> _mesh, std::shared_ptr<Material> _material);
 
 	std::shared_ptr<Mesh> GetMesh();
 	Transform& GetTransform();
-	void SetTint(DirectX::XMFLOAT4 tint);
-	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
-		Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer,
+	std::shared_ptr<Material> GetMaterial();
+	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 		std::shared_ptr<Camera> camera);
+
+	void SetMesh(std::shared_ptr<Mesh> _mesh);
+	void SetMaterial(std::shared_ptr<Material> _material);
+
 private:
 	Transform transform;
 	std::shared_ptr<Mesh> mesh;
-	DirectX::XMFLOAT4 meshTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	std::shared_ptr<Material> material;
 };
 
