@@ -223,7 +223,7 @@ Mesh::Mesh(const std::wstring& objFile, Microsoft::WRL::ComPtr<ID3D11Device> dev
 	// Close the file and create the actual buffers
 	obj.close();
 
-	CreateBuffers(&verts[0], vertCounter, &indices[0], vertCounter, device);
+	CreateBuffers(&verts[0], vertCounter, &indices[0], indexCounter, device);
 
 	// - At this point, "verts" is a vector of Vertex structs, and can be used
 	//    directly to create a vertex buffer:  &verts[0] is the address of the first vert
