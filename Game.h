@@ -9,6 +9,7 @@
 #include "Entity.h"
 #include "Camera.h"
 #include "SimpleShader.h"
+#include "Lights.h"
 
 class Game 
 	: public DXCore
@@ -47,5 +48,9 @@ private:
 	std::vector<std::shared_ptr<Camera>> cameraList;
 
 	std::vector<std::shared_ptr<Material>> materials;
+
+	DirectX::XMFLOAT3 ambientColor = DirectX::XMFLOAT3(0.1f,0.1f,0.25f);
+
+	std::vector<Light> lights;
 };
 

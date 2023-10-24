@@ -171,6 +171,7 @@
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Lights.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PathHelpers.h" />
@@ -202,6 +203,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DX11Starter.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ShaderIncludes.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -72,10 +72,10 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 	// Create 3 different materials
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f), vertexShader, pixelShader)));
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), vertexShader, pixelShader)));
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), vertexShader, pixelShader)));
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), vertexShader, customPS)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, pixelShader, 0.2f)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(0.6f, 0.2f, 0.2f), vertexShader, pixelShader, 0.5f)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(0.5f, 0.0f, 1.0f), vertexShader, pixelShader, 0.0f)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, customPS, 0.0f)));
 	CreateGeometry();
 	
 	// Set initial graphics API state
@@ -106,6 +106,49 @@ void Game::Init()
 
 	// Set active camera as first camera in the list
 	activeCamera = cameraList[0];
+
+	// Create lights
+	Light directionalLight1 = {};
+	directionalLight1.Type = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight1.Direction = XMFLOAT3(-1.0f, 0.0f, 0.0f);
+	directionalLight1.Color = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	directionalLight1.Intensity = 1.0f;
+
+	lights.push_back(directionalLight1);
+
+	Light directionalLight2 = {};
+	directionalLight2.Type = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight2.Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	directionalLight2.Color = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	directionalLight2.Intensity = 1.0f;
+
+	lights.push_back(directionalLight2);
+
+	Light directionalLight3 = {};
+	directionalLight3.Type = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight3.Direction = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	directionalLight3.Color = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	directionalLight3.Intensity = 1.0f;
+
+	lights.push_back(directionalLight3);
+
+	Light pointLight1 = {};
+	pointLight1.Type = LIGHT_TYPE_POINT;
+	pointLight1.Position = XMFLOAT3(0.0f, 0.0f, 3.0f);
+	pointLight1.Color = XMFLOAT3(1.0f, 0.0f, 1.0f);
+	pointLight1.Intensity = 1.0f;
+	pointLight1.Range = 8.0f;
+
+	lights.push_back(pointLight1);
+
+	Light pointLight2 = {};
+	pointLight2.Type = LIGHT_TYPE_POINT;
+	pointLight2.Position = XMFLOAT3(0.0f, -3.0f, 0.0f);
+	pointLight2.Color = XMFLOAT3(0.808f, 1.0f, 0.145f);
+	pointLight2.Intensity = 1.0f;
+	pointLight2.Range = 8.0f;
+
+	lights.push_back(pointLight2);
 }
 
 // --------------------------------------------------------
@@ -135,85 +178,15 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
-	// Create some temporary variables to represent colors
-	// - Not necessary, just makes things more readable
-	XMFLOAT4 red	= XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	XMFLOAT4 green	= XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	XMFLOAT4 blue	= XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-
-#pragma region
-	// Old 2D Meshes
-	// 
-	//// Set up the vertices of the triangle we would like to draw
-	//// - We're going to copy this array, exactly as it exists in CPU memory
-	////    over to a Direct3D-controlled data structure on the GPU (the vertex buffer)
-	//// - Note: Since we don't have a camera or really any concept of
-	////    a "3d world" yet, we're simply describing positions within the
-	////    bounds of how the rasterizer sees our screen: [-1 to +1] on X and Y
-	//// - This means (0,0) is at the very center of the screen.
-	//// - These are known as "Normalized Device Coordinates" or "Homogeneous 
-	////    Screen Coords", which are ways to describe a position without
-	////    knowing the exact size (in pixels) of the image/window/etc.  
-	//// - Long story short: Resizing the window also resizes the triangle,
-	////    since we're describing the triangle in terms of the window itself
-	//Vertex triangleVertices[] =
-	//{
-	//	{ XMFLOAT3(+0.0f, +0.5f, +0.0f), red },
-	//	{ XMFLOAT3(+0.5f, -0.5f, +0.0f), blue },
-	//	{ XMFLOAT3(-0.5f, -0.5f, +0.0f), green },
-	//};
-	//
-	//// Set up indices, which tell us which vertices to use and in which order
-	//// - This is redundant for just 3 vertices, but will be more useful later
-	//// - Indices are technically not required if the vertices are in the buffer 
-	////    in the correct order and each one will be used exactly once
-	//// - But just to see how it's done...
-	//unsigned int triangleIndices[] = { 0, 1, 2 };
-	//
-	//std::shared_ptr<Mesh> triangle = std::make_shared<Mesh>(triangleVertices, 3, triangleIndices, 3, device, context);
-	//
-	//Vertex rectVertices[] =
-	//{
-	//	{ XMFLOAT3(-0.75f, +0.3f, +0.0f), red },
-	//	{ XMFLOAT3(-0.5f, +0.3f, +0.0f), blue },
-	//	{ XMFLOAT3(-0.75f, -0.25f, +0.0f), green },
-	//	{ XMFLOAT3(-0.5f, -0.25f, +0.0f), red },
-	//};
-	//
-	//unsigned int rectIndices[] = { 0, 1, 2, 2, 1, 3 };
-	//
-	//std::shared_ptr<Mesh> rectangle = std::make_shared<Mesh>(rectVertices, 4, rectIndices, 6, device, context);
-	//
-	//Vertex funVertices[] =
-	//{
-	//	{ XMFLOAT3(+0.5f, -0.25f, +0.0f), red },
-	//	{ XMFLOAT3(+0.75f, +0.3f, +0.0f), blue },
-	//	{ XMFLOAT3(+0.6f, -0.25f, +0.0f), green },
-	//	{ XMFLOAT3(+0.75f, +0.1f, +0.0f), blue },
-	//	{ XMFLOAT3(+1.0f, -0.25f, +0.0f), red },
-	//	{ XMFLOAT3(+0.9f, -0.25f, +0.0f), green },
-	//
-	//};
-	//
-	//unsigned int funIndices[] = { 0, 1, 2, 2, 1, 3, 1, 4, 5, 5, 3, 1};
-	//
-	//std::shared_ptr<Mesh> fun = std::make_shared<Mesh>(funVertices, 6, funIndices, 12, device, context);
-	//
-	//entities.push_back(std::make_shared<Entity>(Entity(triangle,m1)));
-	//entities.push_back(std::make_shared<Entity>(Entity(rectangle,m2)));
-	//entities.push_back(std::make_shared<Entity>(Entity(fun,m3)));
-	//entities.push_back(std::make_shared<Entity>(Entity(fun,m1)));
-	//entities.push_back(std::make_shared<Entity>(Entity(rectangle,m2)));
-#pragma endregion
-
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[3])));
+	// Create and reposition entities
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[0])));
 	entities[0]->GetTransform().SetPosition(XMFLOAT3(-3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[3])));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[3])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[0])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[0])));
 	entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[3])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[0])));
 	entities[3]->GetTransform().SetPosition(XMFLOAT3(-6.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[3])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[0])));
 	entities[4]->GetTransform().SetPosition(XMFLOAT3(6.0f, 0.0f, 0.0f));
 }
 
@@ -302,15 +275,21 @@ void Game::Update(float deltaTime, float totalTime)
 		ImGui::TreePop();
 	}
 
-	ImGui::End(); // Ends the current window
+	if (ImGui::TreeNode("Lights")) 
+	{
+		for (int i = 0; i < lights.size(); i++) {
+			ImGui::PushID(i);
 
-	//Apply Transformations to Entities
-	//entities[3]->GetTransform().Rotate(0, 0, sinf(deltaTime));
-	//entities[3]->GetTransform().Scale(0.99999f, 0.99999f, 1.0f);
-	//entities[0]->GetTransform().MoveAbsolute(XMFLOAT3(0,sinf(deltaTime), 0));
-	//entities[4]->GetTransform().SetPosition(XMFLOAT3(0, sinf(totalTime), 0));
-	//entities[1]->GetTransform().SetScale(sinf(totalTime), sinf(totalTime), 1);
-	//entities[2]->GetTransform().SetPosition((XMFLOAT3(sinf(totalTime)-0.5f, sinf(totalTime), 0)));
+			ImGui::Text("Light %i", i);
+
+			ImGui::DragFloat3("Color", &lights[i].Color.x, 0.01f, 0.0f, 1.0f);
+
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+
+	ImGui::End(); // Ends the current window
 
 	// Determine new input capture
 	Input& input = Input::GetInstance();
@@ -347,6 +326,12 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - Other Direct3D calls will also be necessary to do more complex things
 	
 	for(std::shared_ptr<Entity> e : entities) {
+		e->GetMaterial()->GetPixelShader()->SetFloat("roughness", e->GetMaterial()->GetRoughness());
+		e->GetMaterial()->GetPixelShader()->SetFloat3("cameraPos", activeCamera->GetTransform()->GetPosition());
+		e->GetMaterial()->GetPixelShader()->SetFloat3("ambientColor", ambientColor);
+		
+		// Add light data
+		pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		e->Draw(context, activeCamera, totalTime);
 	}
 	
