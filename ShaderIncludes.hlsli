@@ -70,7 +70,7 @@ float3 DirectionalLight(Light light, float3 normal, float roughness, float3 colo
     float3 dirToLight = normalize(-light.Direction);
      
     // Used for specular calculation
-    float3 R = reflect(dirToLight, normal);
+    float3 R = reflect(-dirToLight, normal);
     float3 V = normalize(cameraPos - worldPosition);
     
     float diffuse = Diffuse(normal, R);
@@ -84,7 +84,7 @@ float3 PointLight(Light light, float3 normal, float roughness, float3 colorTint,
     float3 dirToLight = normalize(light.Position - worldPosition);
      
     // Used for specular calculation
-    float3 R = reflect(dirToLight, normal);
+    float3 R = reflect(-dirToLight, normal);
     float3 V = normalize(cameraPos - worldPosition);
     
     float attenuation = Attenuate(light, worldPosition);

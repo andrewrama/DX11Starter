@@ -110,7 +110,7 @@ void Game::Init()
 	// Create lights
 	Light directionalLight1 = {};
 	directionalLight1.Type = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight1.Direction = XMFLOAT3(-1.0f, 0.0f, 0.0f);
+	directionalLight1.Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	directionalLight1.Color = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	directionalLight1.Intensity = 1.0f;
 
@@ -118,7 +118,7 @@ void Game::Init()
 
 	Light directionalLight2 = {};
 	directionalLight2.Type = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight2.Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	directionalLight2.Direction = XMFLOAT3(-1.0f, 0.0f, 0.0f);
 	directionalLight2.Color = XMFLOAT3(0.0f, 0.0f, 1.0f);
 	directionalLight2.Intensity = 1.0f;
 
@@ -126,7 +126,7 @@ void Game::Init()
 
 	Light directionalLight3 = {};
 	directionalLight3.Type = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight3.Direction = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	directionalLight3.Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
 	directionalLight3.Color = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	directionalLight3.Intensity = 1.0f;
 
@@ -143,7 +143,7 @@ void Game::Init()
 
 	Light pointLight2 = {};
 	pointLight2.Type = LIGHT_TYPE_POINT;
-	pointLight2.Position = XMFLOAT3(0.0f, -3.0f, 0.0f);
+	pointLight2.Position = XMFLOAT3(0.0f, 3.0f, 0.0f);
 	pointLight2.Color = XMFLOAT3(0.808f, 1.0f, 0.145f);
 	pointLight2.Intensity = 1.0f;
 	pointLight2.Range = 8.0f;
