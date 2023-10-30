@@ -26,6 +26,7 @@ std::shared_ptr<Material> Entity::GetMaterial()
 void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
 	std::shared_ptr<Camera> camera, float totalTime)
 {
+	material->PrepareMaterial();
 
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
 	vs->SetMatrix4x4("world", transform.GetWorldMatrix());

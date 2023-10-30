@@ -65,7 +65,7 @@ float Attenuate(Light light, float3 worldPos)
 }
 
 
-float3 DirectionalLight(Light light, float3 normal, float roughness, float3 colorTint, float3 cameraPos, float3 worldPosition)
+float3 DirectionalLight(Light light, float3 normal, float roughness, float3 colorTint, float3 cameraPos, float3 worldPosition, float specScale)
 {
     float3 dirToLight = normalize(-light.Direction);
      
@@ -74,12 +74,12 @@ float3 DirectionalLight(Light light, float3 normal, float roughness, float3 colo
     float3 V = normalize(cameraPos - worldPosition);
     
     float diffuse = Diffuse(normal, R);
-    float specular = Specular(normal, R, V, roughness);
+    float specular = Specular(normal, R, V, roughness) * specScale;
     
     return light.Color * (colorTint * diffuse + specular) * light.Intensity;
 }
 
-float3 PointLight(Light light, float3 normal, float roughness, float3 colorTint, float3 cameraPos, float3 worldPosition)
+float3 PointLight(Light light, float3 normal, float roughness, float3 colorTint, float3 cameraPos, float3 worldPosition, float specScale)
 {
     float3 dirToLight = normalize(light.Position - worldPosition);
      
@@ -89,7 +89,7 @@ float3 PointLight(Light light, float3 normal, float roughness, float3 colorTint,
     
     float attenuation = Attenuate(light, worldPosition);
     float diffuse = Diffuse(normal, R);
-    float specular = Specular(normal, R, V, roughness);
+    float specular = Specular(normal, R, V, roughness) * specScale;
     
     return light.Color * (colorTint * diffuse + specular) * attenuation * light.Intensity;
 }

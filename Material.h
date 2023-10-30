@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 #include "SimpleShader.h"
+#include <unordered_map>
 
 class Material
 {
@@ -23,6 +24,11 @@ public:
 	std::shared_ptr<SimplePixelShader> GetPixelShader();
 	void SetPixelShader(std::shared_ptr<SimplePixelShader> _ps);
 
+
+	void AddTextureSRV(std::string shaderName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
+	void AddSampler(std::string shaderName, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler);
+	void PrepareMaterial();
+
 	float GetRoughness();
 	void SetRoughness(float _roughness);
 
@@ -31,5 +37,7 @@ private:
 	std::shared_ptr<SimpleVertexShader> vs;
 	std::shared_ptr<SimplePixelShader> ps;
 	float roughness;
+	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
+	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11SamplerState>> samplers;
 };
 

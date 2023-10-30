@@ -8,6 +8,7 @@
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
+#include "WICTextureLoader.h"
 
 // Needed for a helper function to load pre-compiled shader files
 #pragma comment(lib, "d3dcompiler.lib")
@@ -71,11 +72,8 @@ void Game::Init()
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
-	// Create 3 different materials
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, pixelShader, 0.2f)));
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(0.6f, 0.2f, 0.2f), vertexShader, pixelShader, 0.5f)));
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(0.5f, 0.0f, 1.0f), vertexShader, pixelShader, 0.0f)));
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, customPS, 0.0f)));
+	LoadTexturesAndCreateMaterials();
+	CreateLights();
 	CreateGeometry();
 	
 	// Set initial graphics API state
@@ -106,49 +104,6 @@ void Game::Init()
 
 	// Set active camera as first camera in the list
 	activeCamera = cameraList[0];
-
-	// Create lights
-	Light directionalLight1 = {};
-	directionalLight1.Type = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight1.Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	directionalLight1.Color = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	directionalLight1.Intensity = 1.0f;
-
-	lights.push_back(directionalLight1);
-
-	Light directionalLight2 = {};
-	directionalLight2.Type = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight2.Direction = XMFLOAT3(-1.0f, 0.0f, 0.0f);
-	directionalLight2.Color = XMFLOAT3(0.0f, 0.0f, 1.0f);
-	directionalLight2.Intensity = 1.0f;
-
-	lights.push_back(directionalLight2);
-
-	Light directionalLight3 = {};
-	directionalLight3.Type = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight3.Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	directionalLight3.Color = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	directionalLight3.Intensity = 1.0f;
-
-	lights.push_back(directionalLight3);
-
-	Light pointLight1 = {};
-	pointLight1.Type = LIGHT_TYPE_POINT;
-	pointLight1.Position = XMFLOAT3(0.0f, 0.0f, 3.0f);
-	pointLight1.Color = XMFLOAT3(1.0f, 0.0f, 1.0f);
-	pointLight1.Intensity = 1.0f;
-	pointLight1.Range = 8.0f;
-
-	lights.push_back(pointLight1);
-
-	Light pointLight2 = {};
-	pointLight2.Type = LIGHT_TYPE_POINT;
-	pointLight2.Position = XMFLOAT3(0.0f, 3.0f, 0.0f);
-	pointLight2.Color = XMFLOAT3(0.808f, 1.0f, 0.145f);
-	pointLight2.Intensity = 1.0f;
-	pointLight2.Range = 8.0f;
-
-	lights.push_back(pointLight2);
 }
 
 // --------------------------------------------------------
@@ -171,6 +126,118 @@ void Game::LoadShaders()
 		FixPath(L"CustomPS.cso").c_str());
 }
 
+void Game::LoadTexturesAndCreateMaterials() 
+{
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brokenTilesSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(), 
+		FixPath(L"../../Assets/Textures/brokentiles.png").c_str(), 0, 
+		brokenTilesSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brokenTilesSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(), 
+		FixPath(L"../../Assets/Textures/brokentiles_specular.png").c_str(), 0, 
+		brokenTilesSpecSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rustyMetalSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(), 
+		FixPath(L"../../Assets/Textures/rustymetal.png").c_str(), 0, 
+		rustyMetalSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rustyMetalSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(), 
+		FixPath(L"../../Assets/Textures/rustymetal_specular.png").c_str(), 0, 
+		rustyMetalSpecSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> tilesSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(), 
+		FixPath(L"../../Assets/Textures/tiles.png").c_str(), 0, 
+		tilesSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> tilesSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(), 
+		FixPath(L"../../Assets/Textures/tiles_specular.png").c_str(), 0, 
+		tilesSpecSRV.GetAddressOf());
+
+
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
+
+	/*
+	OLD MATERIALS
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, pixelShader, 0.2f)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(0.6f, 0.2f, 0.2f), vertexShader, pixelShader, 0.5f)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(0.5f, 0.0f, 1.0f), vertexShader, pixelShader, 0.0f)));
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, customPS, 0.0f)));
+	*/
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
+	materials[0]->AddSampler("BasicSampler", sampler);
+	materials[0]->AddTextureSRV("SurfaceTexture", brokenTilesSRV);
+	materials[0]->AddTextureSRV("SpecularTexture", brokenTilesSpecSRV);
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
+	materials[1]->AddSampler("BasicSampler", sampler);
+	materials[1]->AddTextureSRV("SurfaceTexture", rustyMetalSRV);
+	materials[1]->AddTextureSRV("SpecularTexture", rustyMetalSpecSRV);
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
+	materials[2]->AddSampler("BasicSampler", sampler);
+	materials[2]->AddTextureSRV("SurfaceTexture", tilesSRV);
+	materials[2]->AddTextureSRV("SpecularTexture", tilesSpecSRV);
+}
+
+void Game::CreateLights()
+{
+	Light directionalLight1 = {};
+	directionalLight1.Type = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight1.Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	directionalLight1.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	directionalLight1.Intensity = 1.0f;
+
+	lights.push_back(directionalLight1);
+
+	Light directionalLight2 = {};
+	directionalLight2.Type = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight2.Direction = XMFLOAT3(-1.0f, 0.0f, 0.0f);
+	directionalLight2.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	directionalLight2.Intensity = 1.0f;
+
+	lights.push_back(directionalLight2);
+
+	Light directionalLight3 = {};
+	directionalLight3.Type = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight3.Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
+	directionalLight3.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	directionalLight3.Intensity = 1.0f;
+
+	lights.push_back(directionalLight3);
+
+	Light pointLight1 = {};
+	pointLight1.Type = LIGHT_TYPE_POINT;
+	pointLight1.Position = XMFLOAT3(0.0f, 0.0f, 3.0f);
+	pointLight1.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	pointLight1.Intensity = 1.0f;
+	pointLight1.Range = 8.0f;
+
+	lights.push_back(pointLight1);
+
+	Light pointLight2 = {};
+	pointLight2.Type = LIGHT_TYPE_POINT;
+	pointLight2.Position = XMFLOAT3(0.0f, 3.0f, 0.0f);
+	pointLight2.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	pointLight2.Intensity = 1.0f;
+	pointLight2.Range = 8.0f;
+
+	lights.push_back(pointLight2);
+}
 
 
 // --------------------------------------------------------
@@ -181,12 +248,12 @@ void Game::CreateGeometry()
 	// Create and reposition entities
 	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[0])));
 	entities[0]->GetTransform().SetPosition(XMFLOAT3(-3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[0])));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[0])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[1])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[2])));
 	entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
 	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[0])));
 	entities[3]->GetTransform().SetPosition(XMFLOAT3(-6.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[0])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[1])));
 	entities[4]->GetTransform().SetPosition(XMFLOAT3(6.0f, 0.0f, 0.0f));
 }
 

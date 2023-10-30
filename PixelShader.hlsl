@@ -9,6 +9,10 @@ cbuffer ExternalData : register(b0)
     Light lights[5];
 }
 
+Texture2D SurfaceTexture : register(t0);
+Texture2D SpecularTexture : register(t1);
+
+SamplerState BasicSampler : register(s0);
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -23,7 +27,11 @@ float4 main(VertexToPixel input) : SV_TARGET
 {
     input.normal = normalize(input.normal);
     
-    float3 finalColor = colorTint * ambientColor;
+    float3 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb * colorTint;
+    
+    float3 finalColor = surfaceColor * ambientColor;
+    
+    float specScale = SpecularTexture.Sample(BasicSampler, input.uv).r;
     
     for (int i = 0; i < 5; i++)
     {
@@ -32,11 +40,11 @@ float4 main(VertexToPixel input) : SV_TARGET
         switch (currentLight.Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                finalColor += DirectionalLight(currentLight, input.normal, roughness, colorTint, cameraPos, input.worldPosition);
+                finalColor += DirectionalLight(currentLight, input.normal, roughness, surfaceColor, cameraPos, input.worldPosition, specScale);
                 break;
             
             case LIGHT_TYPE_POINT:
-                finalColor += PointLight(currentLight, input.normal, roughness, colorTint, cameraPos, input.worldPosition);
+                finalColor += PointLight(currentLight, input.normal, roughness, surfaceColor, cameraPos, input.worldPosition, specScale);
                 break;
         }
     }
