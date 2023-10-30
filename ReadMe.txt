@@ -1,0 +1,1 @@
+I added the ability to use a specular map to control the per-pixel shininess.
