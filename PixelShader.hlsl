@@ -6,11 +6,12 @@ cbuffer ExternalData : register(b0)
     float roughness;
     float3 cameraPos;
     float3 ambientColor;
-    Light lights[5];
+    Light lights[3];
 }
 
 Texture2D SurfaceTexture : register(t0);
-Texture2D SpecularTexture : register(t1);
+Texture2D SpecularMap : register(t1);
+Texture2D NormalMap : register(t2);
 
 SamplerState BasicSampler : register(s0);
 
@@ -26,14 +27,27 @@ SamplerState BasicSampler : register(s0);
 float4 main(VertexToPixel input) : SV_TARGET
 {
     input.normal = normalize(input.normal);
+    input.tangent = normalize(input.tangent);
+    
+    float3 N = normalize(input.normal);
+    float3 T = normalize(input.tangent);
+    T = normalize(T - N * dot(T, N)); // Gram-Schmidt assumes T&N are normalized!
+    float3 B = cross(T, N);
+    float3x3 TBN = float3x3(T, B, N);
+    
+    float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
+    unpackedNormal = normalize(unpackedNormal); // Don’t forget to normalize!
+    
+    input.normal = mul(unpackedNormal, TBN);
+
     
     float3 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb * colorTint;
     
     float3 finalColor = surfaceColor * ambientColor;
     
-    float specScale = SpecularTexture.Sample(BasicSampler, input.uv).r;
+    float specScale = SpecularMap.Sample(BasicSampler, input.uv).r;
     
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 3; i++)
     {
         Light currentLight = lights[i];
         

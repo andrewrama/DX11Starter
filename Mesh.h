@@ -18,6 +18,8 @@ class Mesh
 			int _numOfIndices,
 			Microsoft::WRL::ComPtr<ID3D11Device> _device);
 
+		void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
+
 	public:
 		Mesh(Vertex* _vertices,
 			int numOfVertices,

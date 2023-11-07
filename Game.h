@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "SimpleShader.h"
 #include "Lights.h"
+#include "Sky.h"
 
 class Game 
 	: public DXCore
@@ -51,8 +52,13 @@ private:
 
 	std::vector<std::shared_ptr<Material>> materials;
 
-	DirectX::XMFLOAT3 ambientColor = DirectX::XMFLOAT3(0.1f,0.1f,0.25f);
+	DirectX::XMFLOAT3 ambientColor = DirectX::XMFLOAT3(0.59f,0.42f,0.52f);
 
 	std::vector<Light> lights;
+
+	std::shared_ptr<Sky> sky;
+	std::shared_ptr<Mesh> skyMesh;
+	std::shared_ptr<SimpleVertexShader> skyVertexShader;
+	std::shared_ptr<SimplePixelShader> skyPixelShader;
 };
 

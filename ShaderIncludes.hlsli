@@ -28,6 +28,7 @@ struct VertexShaderInput
     float3 localPosition : POSITION; // XYZ position
     float3 normal        : NORMAL;
     float2 uv			 : TEXCOORD;
+    float3 tangent       : TANGENT;
 };
 
 
@@ -41,8 +42,39 @@ struct VertexToPixel
     float4 screenPosition : SV_POSITION; // XYZW position (System Value Position)
     float3 normal         : NORMAL;
     float2 uv             : TEXCOORD;
+    float3 tangent        : TANGENT;
     float3 worldPosition  : POSITION;
 };
+
+struct VertexToPixel_Sky
+{
+    float4 position : SV_POSITION;
+    float3 sampleDir : DIRECTION;
+};
+
+// Basic sample and unpack
+float3 SampleAndUnpackNormalMap(Texture2D map, SamplerState samp, float2 uv)
+{
+    return map.Sample(samp, uv).rgb * 2.0f - 1.0f;
+}
+
+// Handle converting tangent-space normal map to world space normal
+float3 NormalMapping(Texture2D map, SamplerState samp, float2 uv, float3 normal, float3 tangent)
+{
+	// Grab the normal from the map
+    float3 normalFromMap = SampleAndUnpackNormalMap(map, samp, uv);
+
+	// Gather the required vectors for converting the normal
+    float3 N = normal;
+    float3 T = normalize(tangent - N * dot(tangent, N));
+    float3 B = cross(T, N);
+
+	// Create the 3x3 matrix to convert from TANGENT-SPACE normals to WORLD-SPACE normals
+    float3x3 TBN = float3x3(T, B, N);
+
+	// Adjust the normal from the map and simply use the results
+    return normalize(mul(normalFromMap, TBN));
+}
 
 // Helpers
 float Diffuse(float3 normal, float3 dirToLight)

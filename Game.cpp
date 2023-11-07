@@ -124,10 +124,17 @@ void Game::LoadShaders()
 
 	customPS = std::make_shared<SimplePixelShader>(device, context,
 		FixPath(L"CustomPS.cso").c_str());
+
+	skyVertexShader = std::make_shared<SimpleVertexShader>(device, context,
+		FixPath(L"SkyVertexShader.cso").c_str());
+
+	skyPixelShader = std::make_shared<SimplePixelShader>(device, context,
+		FixPath(L"SkyPixelShader.cso").c_str());
 }
 
 void Game::LoadTexturesAndCreateMaterials() 
 {
+#pragma region loadTextures
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brokenTilesSRV;
 	CreateWICTextureFromFile(device.Get(), context.Get(), 
 		FixPath(L"../../Assets/Textures/brokentiles.png").c_str(), 0, 
@@ -158,6 +165,62 @@ void Game::LoadTexturesAndCreateMaterials()
 		FixPath(L"../../Assets/Textures/tiles_specular.png").c_str(), 0, 
 		tilesSpecSRV.GetAddressOf());
 
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> flatNormalsSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/flat_normals.png").c_str(), 0,
+		flatNormalsSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> whiteSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/white_specular.png").c_str(), 0,
+		whiteSpecSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/cobblestone.png").c_str(), 0,
+		cobblestoneSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneNormalsSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/cobblestone_normals.png").c_str(), 0,
+		cobblestoneNormalsSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/cobblestone_specular.png").c_str(), 0,
+		cobblestoneSpecSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushionSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/cushion.png").c_str(), 0,
+		cushionSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushionNormalsSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/cushion_normals.png").c_str(), 0,
+		cushionNormalsSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushionSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/cushion_specular.png").c_str(), 0,
+		cushionSpecSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rockSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/rock.png").c_str(), 0,
+		rockSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rockNormalsSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/rock_normals.png").c_str(), 0,
+		rockNormalsSRV.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rockSpecSRV;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/rock_specular.png").c_str(), 0,
+		rockSpecSRV.GetAddressOf());
+
+#pragma endregion loadTextures
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 	D3D11_SAMPLER_DESC samplerDesc = {};
@@ -168,6 +231,24 @@ void Game::LoadTexturesAndCreateMaterials()
 	samplerDesc.MaxAnisotropy = 16;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
+
+	// Create Sky
+	skyMesh = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device);
+
+	sky = std::make_shared<Sky>(
+		FixPath(L"../../Assets/Textures/Clouds Pink/right.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/left.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/up.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/down.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/front.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/back.png").c_str(),
+		skyMesh,
+		sampler,
+		skyPixelShader,
+		skyVertexShader,
+		context,
+		device
+	);
 
 	/*
 	OLD MATERIALS
@@ -181,17 +262,38 @@ void Game::LoadTexturesAndCreateMaterials()
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[0]->AddSampler("BasicSampler", sampler);
 	materials[0]->AddTextureSRV("SurfaceTexture", brokenTilesSRV);
-	materials[0]->AddTextureSRV("SpecularTexture", brokenTilesSpecSRV);
+	materials[0]->AddTextureSRV("SpecularMap", brokenTilesSpecSRV);
+	materials[0]->AddTextureSRV("NormalMap", flatNormalsSRV);
 
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[1]->AddSampler("BasicSampler", sampler);
 	materials[1]->AddTextureSRV("SurfaceTexture", rustyMetalSRV);
-	materials[1]->AddTextureSRV("SpecularTexture", rustyMetalSpecSRV);
+	materials[1]->AddTextureSRV("SpecularMap", rustyMetalSpecSRV);
+	materials[1]->AddTextureSRV("NormalMap", flatNormalsSRV);
 
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[2]->AddSampler("BasicSampler", sampler);
 	materials[2]->AddTextureSRV("SurfaceTexture", tilesSRV);
-	materials[2]->AddTextureSRV("SpecularTexture", tilesSpecSRV);
+	materials[2]->AddTextureSRV("SpecularMap", tilesSpecSRV);
+	materials[2]->AddTextureSRV("NormalMap", flatNormalsSRV);
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
+	materials[3]->AddSampler("BasicSampler", sampler);
+	materials[3]->AddTextureSRV("SurfaceTexture", cushionSRV);
+	materials[3]->AddTextureSRV("SpecularMap", cushionSpecSRV);
+	materials[3]->AddTextureSRV("NormalMap", cushionNormalsSRV);
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
+	materials[4]->AddSampler("BasicSampler", sampler);
+	materials[4]->AddTextureSRV("SurfaceTexture", cobblestoneSRV);
+	materials[4]->AddTextureSRV("SpecularMap", cobblestoneSpecSRV);
+	materials[4]->AddTextureSRV("NormalMap", cobblestoneNormalsSRV);
+
+	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
+	materials[5]->AddSampler("BasicSampler", sampler);
+	materials[5]->AddTextureSRV("SurfaceTexture", rockSRV);
+	materials[5]->AddTextureSRV("SpecularMap", rockSpecSRV);
+	materials[5]->AddTextureSRV("NormalMap", rockNormalsSRV);
 }
 
 void Game::CreateLights()
@@ -200,7 +302,7 @@ void Game::CreateLights()
 	directionalLight1.Type = LIGHT_TYPE_DIRECTIONAL;
 	directionalLight1.Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	directionalLight1.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	directionalLight1.Intensity = 0.5f;
+	directionalLight1.Intensity = 1.0f;
 
 	lights.push_back(directionalLight1);
 
@@ -208,7 +310,7 @@ void Game::CreateLights()
 	directionalLight2.Type = LIGHT_TYPE_DIRECTIONAL;
 	directionalLight2.Direction = XMFLOAT3(-1.0f, 0.0f, 1.0f);
 	directionalLight2.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	directionalLight2.Intensity = 0.6f;
+	directionalLight2.Intensity = 1.0f;
 
 	lights.push_back(directionalLight2);
 
@@ -218,7 +320,7 @@ void Game::CreateLights()
 	directionalLight3.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	directionalLight3.Intensity = 0.7f;
 
-	lights.push_back(directionalLight3);
+	//lights.push_back(directionalLight3);
 
 	Light pointLight1 = {};
 	pointLight1.Type = LIGHT_TYPE_POINT;
@@ -227,7 +329,7 @@ void Game::CreateLights()
 	pointLight1.Intensity = 1.0f;
 	pointLight1.Range = 8.0f;
 
-	lights.push_back(pointLight1);
+	//lights.push_back(pointLight1);
 
 	Light pointLight2 = {};
 	pointLight2.Type = LIGHT_TYPE_POINT;
@@ -246,14 +348,14 @@ void Game::CreateLights()
 void Game::CreateGeometry()
 {
 	// Create and reposition entities
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[0])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[5])));
 	entities[0]->GetTransform().SetPosition(XMFLOAT3(-3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[1])));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[2])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[4])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[3])));
 	entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[0])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[3])));
 	entities[3]->GetTransform().SetPosition(XMFLOAT3(-6.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[1])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[5])));
 	entities[4]->GetTransform().SetPosition(XMFLOAT3(6.0f, 0.0f, 0.0f));
 }
 
@@ -358,6 +460,12 @@ void Game::Update(float deltaTime, float totalTime)
 
 	ImGui::End(); // Ends the current window
 
+	entities[0]->GetTransform().Rotate(0, deltaTime * .5f, 0);
+	entities[1]->GetTransform().Rotate(0, deltaTime * .5f, 0);
+	entities[2]->GetTransform().Rotate(0, deltaTime * .5f, 0);
+	entities[3]->GetTransform().Rotate(0, deltaTime * .5f, 0);
+	entities[4]->GetTransform().Rotate(0, deltaTime * .5f, 0);
+
 	// Determine new input capture
 	Input& input = Input::GetInstance();
 	input.SetKeyboardCapture(io.WantCaptureKeyboard);
@@ -402,6 +510,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		e->Draw(context, activeCamera, totalTime);
 	}
 	
+	sky->Draw(activeCamera);
 
 	// Frame END
 	// - These should happen exactly ONCE PER FRAME
