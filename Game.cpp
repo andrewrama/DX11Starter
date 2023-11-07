@@ -135,46 +135,6 @@ void Game::LoadShaders()
 void Game::LoadTexturesAndCreateMaterials() 
 {
 #pragma region loadTextures
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brokenTilesSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(), 
-		FixPath(L"../../Assets/Textures/brokentiles.png").c_str(), 0, 
-		brokenTilesSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brokenTilesSpecSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(), 
-		FixPath(L"../../Assets/Textures/brokentiles_specular.png").c_str(), 0, 
-		brokenTilesSpecSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rustyMetalSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(), 
-		FixPath(L"../../Assets/Textures/rustymetal.png").c_str(), 0, 
-		rustyMetalSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rustyMetalSpecSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(), 
-		FixPath(L"../../Assets/Textures/rustymetal_specular.png").c_str(), 0, 
-		rustyMetalSpecSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> tilesSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(), 
-		FixPath(L"../../Assets/Textures/tiles.png").c_str(), 0, 
-		tilesSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> tilesSpecSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(), 
-		FixPath(L"../../Assets/Textures/tiles_specular.png").c_str(), 0, 
-		tilesSpecSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> flatNormalsSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/flat_normals.png").c_str(), 0,
-		flatNormalsSRV.GetAddressOf());
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> whiteSpecSRV;
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/white_specular.png").c_str(), 0,
-		whiteSpecSRV.GetAddressOf());
-
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneSRV;
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		FixPath(L"../../Assets/Textures/cobblestone.png").c_str(), 0,
@@ -259,41 +219,25 @@ void Game::LoadTexturesAndCreateMaterials()
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1.0f, 1.0f, 1.0f), vertexShader, customPS, 0.0f)));
 	*/
 
+
+
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[0]->AddSampler("BasicSampler", sampler);
-	materials[0]->AddTextureSRV("SurfaceTexture", brokenTilesSRV);
-	materials[0]->AddTextureSRV("SpecularMap", brokenTilesSpecSRV);
-	materials[0]->AddTextureSRV("NormalMap", flatNormalsSRV);
+	materials[0]->AddTextureSRV("SurfaceTexture", cushionSRV);
+	materials[0]->AddTextureSRV("SpecularMap", cushionSpecSRV);
+	materials[0]->AddTextureSRV("NormalMap", cushionNormalsSRV);
 
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[1]->AddSampler("BasicSampler", sampler);
-	materials[1]->AddTextureSRV("SurfaceTexture", rustyMetalSRV);
-	materials[1]->AddTextureSRV("SpecularMap", rustyMetalSpecSRV);
-	materials[1]->AddTextureSRV("NormalMap", flatNormalsSRV);
+	materials[1]->AddTextureSRV("SurfaceTexture", cobblestoneSRV);
+	materials[1]->AddTextureSRV("SpecularMap", cobblestoneSpecSRV);
+	materials[1]->AddTextureSRV("NormalMap", cobblestoneNormalsSRV);
 
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[2]->AddSampler("BasicSampler", sampler);
-	materials[2]->AddTextureSRV("SurfaceTexture", tilesSRV);
-	materials[2]->AddTextureSRV("SpecularMap", tilesSpecSRV);
-	materials[2]->AddTextureSRV("NormalMap", flatNormalsSRV);
-
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
-	materials[3]->AddSampler("BasicSampler", sampler);
-	materials[3]->AddTextureSRV("SurfaceTexture", cushionSRV);
-	materials[3]->AddTextureSRV("SpecularMap", cushionSpecSRV);
-	materials[3]->AddTextureSRV("NormalMap", cushionNormalsSRV);
-
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
-	materials[4]->AddSampler("BasicSampler", sampler);
-	materials[4]->AddTextureSRV("SurfaceTexture", cobblestoneSRV);
-	materials[4]->AddTextureSRV("SpecularMap", cobblestoneSpecSRV);
-	materials[4]->AddTextureSRV("NormalMap", cobblestoneNormalsSRV);
-
-	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
-	materials[5]->AddSampler("BasicSampler", sampler);
-	materials[5]->AddTextureSRV("SurfaceTexture", rockSRV);
-	materials[5]->AddTextureSRV("SpecularMap", rockSpecSRV);
-	materials[5]->AddTextureSRV("NormalMap", rockNormalsSRV);
+	materials[2]->AddTextureSRV("SurfaceTexture", rockSRV);
+	materials[2]->AddTextureSRV("SpecularMap", rockSpecSRV);
+	materials[2]->AddTextureSRV("NormalMap", rockNormalsSRV);
 }
 
 void Game::CreateLights()
@@ -348,14 +292,14 @@ void Game::CreateLights()
 void Game::CreateGeometry()
 {
 	// Create and reposition entities
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[5])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[2])));
 	entities[0]->GetTransform().SetPosition(XMFLOAT3(-3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[4])));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[3])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[1])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[1])));
 	entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[3])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[0])));
 	entities[3]->GetTransform().SetPosition(XMFLOAT3(-6.0f, 0.0f, 0.0f));
-	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[5])));
+	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[2])));
 	entities[4]->GetTransform().SetPosition(XMFLOAT3(6.0f, 0.0f, 0.0f));
 }
 
