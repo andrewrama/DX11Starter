@@ -1,18 +1,19 @@
 #include "ShaderIncludes.hlsli"
 
+#define MAX_LIGHTS 64
+
 cbuffer ExternalData : register(b0)
 {
-    float3 colorTint;
-    float roughness;
     float3 cameraPos;
-    float3 ambientColor;
-    Light lights[3];
+    int lightNum;
+    Light lights[MAX_LIGHTS];
+    
 }
 
-Texture2D SurfaceTexture : register(t0);
-Texture2D SpecularMap : register(t1);
-Texture2D NormalMap : register(t2);
-
+Texture2D Albedo : register(t0);
+Texture2D NormalMap : register(t1);
+Texture2D RoughnessMap : register(t2);
+Texture2D MetalnessMap : register(t3);
 SamplerState BasicSampler : register(s0);
 
 // --------------------------------------------------------
@@ -40,28 +41,29 @@ float4 main(VertexToPixel input) : SV_TARGET
     
     input.normal = mul(unpackedNormal, TBN);
 
+    float roughness = RoughnessMap.Sample(BasicSampler, input.uv).r;
     
-    float3 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb;
+    float metalness = MetalnessMap.Sample(BasicSampler, input.uv).r;
+    
+    float3 surfaceColor = Albedo.Sample(BasicSampler, input.uv).rgb;
     surfaceColor = pow(surfaceColor, 2.2f);
-
-    surfaceColor *= colorTint;
     
-    float3 finalColor = surfaceColor * ambientColor;
+    float3 specularColor = lerp(F0_NON_METAL, surfaceColor.rgb, metalness);
     
-    float specScale = SpecularMap.Sample(BasicSampler, input.uv).r;
+    float3 finalColor = float3(0, 0, 0);
     
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < lightNum; i++)
     {
         Light currentLight = lights[i];
         
         switch (currentLight.Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                finalColor += DirectionalLight(currentLight, input.normal, roughness, surfaceColor, cameraPos, input.worldPosition, specScale);
+                finalColor += DirectionalLightPBR(currentLight, input.normal, roughness, metalness, surfaceColor, cameraPos, input.worldPosition, specularColor);
                 break;
             
             case LIGHT_TYPE_POINT:
-                finalColor += PointLight(currentLight, input.normal, roughness, surfaceColor, cameraPos, input.worldPosition, specScale);
+                finalColor += PointLightPBR(currentLight, input.normal, roughness, metalness, surfaceColor, cameraPos, input.worldPosition, specularColor);
                 break;
         }
     }

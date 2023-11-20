@@ -36,7 +36,6 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 	vs->CopyAllBufferData();
 
 	std::shared_ptr<SimplePixelShader> ps = material->GetPixelShader();
-	ps->SetFloat3("colorTint", material->GetColorTint());
 	ps->SetFloat("totalTime", totalTime);
 	ps->CopyAllBufferData();
 
