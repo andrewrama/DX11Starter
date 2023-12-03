@@ -317,7 +317,7 @@ void Game::CreateLights()
 	pointLight1.Intensity = 1.0f;
 	pointLight1.Range = 8.0f;
 
-	lights.push_back(pointLight1);
+	//lights.push_back(pointLight1);
 
 	Light pointLight2 = {};
 	pointLight2.Type = LIGHT_TYPE_POINT;
@@ -326,7 +326,7 @@ void Game::CreateLights()
 	pointLight2.Intensity = 1.0f;
 	pointLight2.Range = 8.0f;
 
-	lights.push_back(pointLight2);
+	//lights.push_back(pointLight2);
 }
 
 void Game::CreateShadowMap()
@@ -561,7 +561,7 @@ void Game::Update(float deltaTime, float totalTime)
 	ImGui::End(); // Ends the current window
 
 	entities[0]->GetTransform().SetPosition(2.0f * sinf(totalTime * .75f) - 2.0f, 2.0f, 2.0f);
-	entities[1]->GetTransform().SetPosition(0, 2.0f * sinf(totalTime * .75f), 0);
+	entities[1]->GetTransform().SetPosition(0, sinf(totalTime * .75f), 0);
 	entities[1]->GetTransform().Rotate(0, deltaTime * .75f, 0);
 	entities[2]->GetTransform().SetPosition(3.0f, 0, 2.0f * sinf(totalTime * .75f));
 
