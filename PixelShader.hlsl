@@ -6,15 +6,17 @@ cbuffer ExternalData : register(b0)
 {
     float3 cameraPos;
     int lightNum;
-    Light lights[MAX_LIGHTS];
-    
+    Light lights[MAX_LIGHTS];  
 }
 
 Texture2D Albedo : register(t0);
 Texture2D NormalMap : register(t1);
 Texture2D RoughnessMap : register(t2);
 Texture2D MetalnessMap : register(t3);
+Texture2D ShadowMap : register(t4);
+
 SamplerState BasicSampler : register(s0);
+SamplerComparisonState ShadowSampler : register(s1);
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -50,6 +52,19 @@ float4 main(VertexToPixel input) : SV_TARGET
     
     float3 specularColor = lerp(F0_NON_METAL, surfaceColor.rgb, metalness);
     
+    // Perform the perspective divide (divide by W) ourselves
+    input.shadowMapPos /= input.shadowMapPos.w;
+    // Convert the normalized device coordinates to UVs for sampling
+    float2 shadowUV = input.shadowMapPos.xy * 0.5f + 0.5f;
+    shadowUV.y = 1 - shadowUV.y; // Flip the Y
+    float distToLight = input.shadowMapPos.z / input.shadowMapPos.w;
+
+    
+    float shadowAmount = ShadowMap.SampleCmpLevelZero(
+        ShadowSampler,
+        shadowUV,
+        distToLight).r;
+    
     float3 finalColor = float3(0, 0, 0);
     
     for (int i = 0; i < lightNum; i++)
@@ -59,7 +74,12 @@ float4 main(VertexToPixel input) : SV_TARGET
         switch (currentLight.Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                finalColor += DirectionalLightPBR(currentLight, input.normal, roughness, metalness, surfaceColor, cameraPos, input.worldPosition, specularColor);
+                float3 lightResult = DirectionalLightPBR(currentLight, input.normal, roughness, metalness, surfaceColor, cameraPos, input.worldPosition, specularColor);
+                if (i == 0)
+                {
+                    lightResult *= shadowAmount;
+                }
+                finalColor += lightResult;
                 break;
             
             case LIGHT_TYPE_POINT:

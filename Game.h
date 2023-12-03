@@ -34,6 +34,8 @@ private:
 	void CreateGeometry();
 	void LoadTexturesAndCreateMaterials();
 	void CreateLights();
+	void CreateShadowMap();
+	void RenderShadowMap();
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
@@ -46,6 +48,7 @@ private:
 	std::shared_ptr<SimplePixelShader> customPS;
 
 	std::vector<std::shared_ptr<Entity>> entities;
+	std::shared_ptr<Entity> floor;
 
 	std::shared_ptr<Camera> activeCamera;
 	std::vector<std::shared_ptr<Camera>> cameraList;
@@ -60,5 +63,15 @@ private:
 	std::shared_ptr<Mesh> skyMesh;
 	std::shared_ptr<SimpleVertexShader> skyVertexShader;
 	std::shared_ptr<SimplePixelShader> skyPixelShader;
+
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;
+	std::shared_ptr<SimpleVertexShader> shadowVertexShader;
+	int shadowMapResolution;
+	float lightProjectionSize;
+	DirectX::XMFLOAT4X4 lightViewMatrix;
+	DirectX::XMFLOAT4X4 lightProjectionMatrix;
 };
 
