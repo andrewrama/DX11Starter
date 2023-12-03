@@ -57,7 +57,7 @@ float4 main(VertexToPixel input) : SV_TARGET
     // Convert the normalized device coordinates to UVs for sampling
     float2 shadowUV = input.shadowMapPos.xy * 0.5f + 0.5f;
     shadowUV.y = 1 - shadowUV.y; // Flip the Y
-    float distToLight = input.shadowMapPos.z / input.shadowMapPos.w;
+    float distToLight = input.shadowMapPos.z;
 
     
     float shadowAmount = ShadowMap.SampleCmpLevelZero(

@@ -455,7 +455,7 @@ void Game::CreateGeometry()
 
 	// Floor Cube
 	floor = std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[3]));
-	floor->GetTransform().SetScale(15.0f, 1.0f, 15.0f);
+	floor->GetTransform().SetScale(10.0f, 1.0f, 10.0f);
 	floor->GetTransform().SetPosition(0.0f, -3.0f, 0.0f);
 }
 
