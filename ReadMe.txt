@@ -1,1 +1,1 @@
-I added the ability to use a specular map to control the per-pixel shininess.
+I added post process box blur with an ImGui slider to control the blur radius
