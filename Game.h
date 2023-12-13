@@ -36,6 +36,7 @@ private:
 	void CreateLights();
 	void CreateShadowMap();
 	void RenderShadowMap();
+	void SetUpRenderTarget();
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
@@ -59,11 +60,13 @@ private:
 
 	std::vector<Light> lights;
 
+	// Sky box
 	std::shared_ptr<Sky> sky;
 	std::shared_ptr<Mesh> skyMesh;
 	std::shared_ptr<SimpleVertexShader> skyVertexShader;
 	std::shared_ptr<SimplePixelShader> skyPixelShader;
 
+	// Shadow mapping
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
@@ -73,5 +76,15 @@ private:
 	float lightProjectionSize;
 	DirectX::XMFLOAT4X4 lightViewMatrix;
 	DirectX::XMFLOAT4X4 lightProjectionMatrix;
+
+	// Post Processing
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
+	std::shared_ptr<SimpleVertexShader> ppVS;
+
+	std::shared_ptr<SimplePixelShader> ppPS;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV;
+
+	float blurRadius = 0.0f;
 };
 

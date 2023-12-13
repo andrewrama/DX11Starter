@@ -77,6 +77,17 @@ void Game::Init()
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
+
+	SetUpRenderTarget();
+	// Post process sampler state setup
+	D3D11_SAMPLER_DESC ppSampDesc = {};
+	ppSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	ppSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&ppSampDesc, ppSampler.GetAddressOf());
+
 	LoadTexturesAndCreateMaterials();
 	CreateLights();
 	CreateGeometry();
@@ -140,6 +151,12 @@ void Game::LoadShaders()
 
 	shadowVertexShader = std::make_shared<SimpleVertexShader>(device, context,
 		FixPath(L"ShadowVertexShader.cso").c_str());
+
+	ppVS = std::make_shared<SimpleVertexShader>(device, context,
+		FixPath(L"FullScreenVertexShader.cso").c_str());
+
+	ppPS = std::make_shared<SimplePixelShader>(device, context,
+		FixPath(L"PostProcessPixelShader.cso").c_str());
 }
 
 void Game::LoadTexturesAndCreateMaterials() 
@@ -225,8 +242,6 @@ void Game::LoadTexturesAndCreateMaterials()
 		FixPath(L"../../Assets/Textures/wood_metal.png").c_str(), 0,
 		woodMetalSRV.GetAddressOf());
 
-#pragma endregion loadTextures
-
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -236,24 +251,6 @@ void Game::LoadTexturesAndCreateMaterials()
 	samplerDesc.MaxAnisotropy = 16;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
-
-	// Create Sky
-	skyMesh = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device);
-
-	sky = std::make_shared<Sky>(
-		FixPath(L"../../Assets/Textures/Clouds Pink/right.png").c_str(),
-		FixPath(L"../../Assets/Textures/Clouds Pink/left.png").c_str(),
-		FixPath(L"../../Assets/Textures/Clouds Pink/up.png").c_str(),
-		FixPath(L"../../Assets/Textures/Clouds Pink/down.png").c_str(),
-		FixPath(L"../../Assets/Textures/Clouds Pink/front.png").c_str(),
-		FixPath(L"../../Assets/Textures/Clouds Pink/back.png").c_str(),
-		skyMesh,
-		sampler,
-		skyPixelShader,
-		skyVertexShader,
-		context,
-		device
-	);
 
 	materials.push_back(std::make_shared<Material>(Material(XMFLOAT3(1, 1, 1), vertexShader, pixelShader, 0.2f)));
 	materials[0]->AddSampler("BasicSampler", sampler);
@@ -282,6 +279,27 @@ void Game::LoadTexturesAndCreateMaterials()
 	materials[3]->AddTextureSRV("NormalMap", woodNormalSRV);
 	materials[3]->AddTextureSRV("RoughnessMap", woodRoughnessSRV);
 	materials[3]->AddTextureSRV("MetalnessMap", woodMetalSRV);
+
+#pragma endregion loadTextures
+
+	// Create Sky
+	skyMesh = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device);
+	
+	sky = std::make_shared<Sky>(
+		FixPath(L"../../Assets/Textures/Clouds Pink/right.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/left.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/up.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/down.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/front.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Pink/back.png").c_str(),
+		skyMesh,
+		sampler,
+		skyPixelShader,
+		skyVertexShader,
+		context,
+		device
+	);
+
 }
 
 void Game::CreateLights()
@@ -436,6 +454,43 @@ void Game::RenderShadowMap()
 	context->RSSetState(0);
 }
 
+void Game::SetUpRenderTarget()
+{
+	ppRTV.Reset();
+	ppSRV.Reset();
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = windowWidth;
+	textureDesc.Height = windowHeight;
+	textureDesc.ArraySize = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.MipLevels = 1;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture;
+	device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
+
+	// Create the Render Target View
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	device->CreateRenderTargetView(
+		ppTexture.Get(),
+		&rtvDesc,
+		ppRTV.ReleaseAndGetAddressOf());
+
+	// Create the Shader Resource View
+	device->CreateShaderResourceView(
+		ppTexture.Get(),
+		0,
+		ppSRV.ReleaseAndGetAddressOf());
+}
 
 // --------------------------------------------------------
 // Creates the geometry we're going to draw - a single triangle for now
@@ -446,10 +501,6 @@ void Game::CreateGeometry()
 	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device), materials[0])));
 	entities[0]->GetTransform().SetPosition(XMFLOAT3(-3.0f, 2.0f, -2.0f));
 	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device), materials[1])));
-	//entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device), materials[2])));
-	//entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
-	//entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device), materials[3])));
-	//entities[3]->GetTransform().SetPosition(XMFLOAT3(-6.0f, 0.0f, 0.0f));
 	entities.push_back(std::make_shared<Entity>(Entity(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device), materials[2])));
 	entities[2]->GetTransform().SetPosition(XMFLOAT3(3.0f, 0.0f, 0.0f));
 
@@ -473,6 +524,8 @@ void Game::OnResize()
 	for (auto& camera : cameraList) {
 		camera->UpdateProjectionMatrix((float)this->windowWidth / this->windowHeight);
 	}
+
+	SetUpRenderTarget();
 }
 
 // --------------------------------------------------------
@@ -494,8 +547,6 @@ void Game::Update(float deltaTime, float totalTime)
 	ImGui::Text("FPS: %f", ImGui::GetIO().Framerate);
 	ImGui::Text("Width: %i", windowWidth);
 	ImGui::Text("Height: %i", windowHeight);
-	//ImGui::DragFloat3("Offset", &meshOffset._41, 0.01f);
-	//ImGui::ColorEdit4("Tint", &meshTint.x);
 
 	// Entity UI
 	if (ImGui::TreeNode("Entities"))
@@ -558,6 +609,8 @@ void Game::Update(float deltaTime, float totalTime)
 		ImGui::TreePop();
 	}
 
+	ImGui::DragFloat("Blur", &blurRadius, 0.01f, 0.0f, 10.0f);
+
 	ImGui::End(); // Ends the current window
 
 	entities[0]->GetTransform().SetPosition(2.0f * sinf(totalTime * .75f) - 2.0f, 2.0f, 2.0f);
@@ -596,7 +649,12 @@ void Game::Draw(float deltaTime, float totalTime)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
+	const float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	context->ClearRenderTargetView(ppRTV.Get(), clearColor);
+
 	RenderShadowMap();
+
+	context->OMSetRenderTargets(1, ppRTV.GetAddressOf(), depthBufferDSV.Get());
 
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw
@@ -620,6 +678,22 @@ void Game::Draw(float deltaTime, float totalTime)
 	floor->GetMaterial()->GetPixelShader()->SetFloat3("cameraPos", activeCamera->GetTransform()->GetPosition());
 	floor->Draw(context, activeCamera, totalTime);
 	sky->Draw(activeCamera);
+
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
+
+	// Activate shaders and bind resources
+	// Also set any required cbuffer data (not shown)	
+	ppPS->SetFloat("blurRadius", blurRadius);
+	ppPS->SetFloat("pixelWidth", 1.0f / windowWidth);
+	ppPS->SetFloat("pixelHeight", 1.0f / windowHeight);
+	ppPS->CopyAllBufferData();
+	ppVS->SetShader();
+	ppPS->SetShader();
+	ppPS->SetShaderResourceView("Pixels", ppSRV.Get());
+	ppPS->SetSamplerState("ClampSampler", ppSampler.Get());
+
+	context->Draw(3, 0);
+
 
 
 	ID3D11ShaderResourceView* nullSRVs[128] = {};
